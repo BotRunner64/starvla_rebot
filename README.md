@@ -1,3 +1,34 @@
+# starvla_rebot
+
+StarVLA OFT 的 ReBot 训练和部署入口。Qwen2.5-VL-3B 接收三视角图像、任务指令、离散化状态和已知前缀。每个未来时刻使用一个动作查询，StarVLA 的 L1 回归头并行输出整段动作。
+
+## 环境与数据
+
+已配置的机器上运行 `conda activate starvla_rebot`。从新环境安装时，在仓库根目录执行以下命令，把 `/path/to/rebot_control` 换成控制器源码目录。数据读取、动作坐标变换、RTC 协议适配来自相邻的 LOOM-policy（验证版本 `e3662a4`）。
+
+```bash
+conda env create -f environment-rebot.yml
+conda activate starvla_rebot
+python -m pip install -e ../LOOM-policy /path/to/rebot_control/policy_link -e '.[rebot]'
+```
+
+`rebot_data/packing` 指向 30 Hz 的 LeRobot v3.0 导出。输入为 top、left_wrist、right_wrist 同步图像和 26 维绝对状态。以观测帧为基准构造后续 50 帧的双臂相对动作（每臂 xyz、6D 旋转、绝对夹爪开合度）。位置和夹爪使用 P1/P99 归一化。训练随机提供 0–6 帧的已知前缀，仅计算后缀损失。
+
+## 训练与部署
+
+首次训练前将 Qwen/Qwen2.5-VL-3B-Instruct 的完整 Hugging Face 目录放在示例的基座路径，联网机器也可直接传模型 ID。训练会把处理器和模型配置写入输出目录的 `processor/`，部署或续训时与 `last.pt` 放在一起。
+
+```bash
+starvla-rebot train --data rebot_data/packing --output rebot_runs/packing --backbone rebot_models/Qwen2.5-VL-3B-Instruct
+starvla-rebot serve --checkpoint rebot_runs/packing/last.pt
+```
+
+可传 `--stats /path/to/norm_stats.json` 使用同一训练集的 openpi 统计量，省略时会从训练样本估计。每 500 步和结束时原子保存模型、优化器和归一化参数，使用同一输出目录可续训。多卡训练用 `torchrun --nproc_per_node 8 -m starvla_rebot train` 加相同训练参数。`--batch-size` 为每卡批量。
+
+服务通过 rebot-policy-link 返回 30 Hz 绝对目标，默认监听 `127.0.0.1:8011`，控制端使用 `rebot policy --port 8011`。默认 RTC 前缀为 3 帧。
+
+---
+
 <p align="center">
 <img src="assets/logo.svg" alt="StarVLA Logo" width="10%">
 </p>
