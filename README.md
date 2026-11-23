@@ -16,10 +16,10 @@ python -m pip install -e ../LOOM-policy /path/to/rebot_control/policy_link -e '.
 
 ## 训练与部署
 
-首次训练前将 Qwen/Qwen2.5-VL-3B-Instruct 的完整 Hugging Face 目录放在示例的基座路径，联网机器也可直接传模型 ID。训练会把处理器和模型配置写入输出目录的 `processor/`，部署或续训时与 `last.pt` 放在一起。
+环境已配置的机器默认读取仓库下的 `rebot_models/Qwen2.5-VL-3B-Instruct`。新机器可将完整基座放入该路径，或用 `--backbone` 指定模型 ID 或目录。训练会把处理器和模型配置写入输出目录的 `processor/`，部署或续训时与 `last.pt` 放在一起。
 
 ```bash
-starvla-rebot train --data rebot_data/packing --output rebot_runs/packing --backbone rebot_models/Qwen2.5-VL-3B-Instruct
+starvla-rebot train --data rebot_data/packing --output rebot_runs/packing
 starvla-rebot serve --checkpoint rebot_runs/packing/last.pt
 ```
 

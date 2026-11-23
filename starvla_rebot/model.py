@@ -1,5 +1,6 @@
 """Qwen2.5-VL and StarVLA's parallel continuous OFT head for ReBot."""
 import os
+from pathlib import Path
 
 from PIL import Image
 import torch
@@ -11,7 +12,9 @@ from starVLA.model.modules.action_model.MLP_ActionHeader import L1RegressionActi
 
 
 def add_options(parser):
-    parser.add_argument('--backbone', default='Qwen/Qwen2.5-VL-3B-Instruct',
+    local = Path(__file__).resolve().parents[1] / 'rebot_models' / 'Qwen2.5-VL-3B-Instruct'
+    default = str(local) if (local / 'model.safetensors.index.json').is_file() else 'Qwen/Qwen2.5-VL-3B-Instruct'
+    parser.add_argument('--backbone', default=default,
                         help='Qwen2.5-VL pretrained directory or Hugging Face ID')
 
 
